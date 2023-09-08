@@ -57,6 +57,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         EmailDto emailDto = new EmailDto();
         emailDto.setMsg_body("Date: " + appointmentDto.getDate() + "\n" + "Time: " + appointmentDto.getStartTime() + " - " + appointmentDto.getEndTime());
         emailDto.setTo_mail(seeker.getEmail());
+//        emailDto.setTo_mail(consultant.getUser().getUsername());
         emailDto.setSubject("Appointment scheduled");
         emailService.sendEmail(emailDto);
         return true;
