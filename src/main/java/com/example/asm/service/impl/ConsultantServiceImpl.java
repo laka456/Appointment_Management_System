@@ -1,6 +1,7 @@
 package com.example.asm.service.impl;
 
 import com.example.asm.dto.ConsultantDto;
+import com.example.asm.dto.EmailDto;
 import com.example.asm.dto.UserDto;
 import com.example.asm.entity.Consultant;
 import com.example.asm.entity.ConsultantAvailability;
@@ -9,6 +10,7 @@ import com.example.asm.repo.ConsultantAvailabilityRepo;
 import com.example.asm.repo.ConsultantRepo;
 import com.example.asm.repo.UserRepo;
 import com.example.asm.service.ConsultantService;
+import com.example.asm.service.EmailService;
 import com.example.asm.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,9 @@ public class ConsultantServiceImpl implements ConsultantService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    EmailService emailService;
+
     @Override
     public boolean add_consultant(ConsultantDto consultantDto) {
         Consultant consultant = new Consultant();
@@ -51,6 +56,11 @@ public class ConsultantServiceImpl implements ConsultantService {
         user.setPassword(encode);
         consultant.setUser(user);
         consultantRepo.save(consultant);
+        EmailDto emailDto = new EmailDto();
+        emailDto.setMsg_body("Your Username: " + consultantDto.getUser().getUsername() + "\n" + "Your Password: " + consultantDto.getUser().getPassword());
+        emailDto.setTo_mail(consultantDto.getUser().getUsername());
+        emailDto.setSubject("User registration");
+        emailService.sendEmail(emailDto);
         return true;
     }
 
@@ -100,10 +110,21 @@ public class ConsultantServiceImpl implements ConsultantService {
     public boolean delete_consultant(long id) {
         Optional<Consultant> byId = consultantRepo.findById(id);
         Consultant consultant = byId.get();
-        ConsultantAvailability byConsultant = consultantAvailabilityRepo.findByConsultant(consultant);
-        consultantAvailabilityRepo.deleteById(byConsultant.getId());
-        consultantRepo.deleteById(id);
-        userRepo.findById(consultant.getUser().getId());
+        if (byId.isPresent()) {
+            Optional<ConsultantAvailability> byConsultant = Optional.ofNullable(consultantAvailabilityRepo.findByConsultant(consultant));
+            if (byConsultant.isPresent()) {
+                ConsultantAvailability consultantAvailability = byConsultant.get();
+                consultantAvailabilityRepo.deleteById(consultantAvailability.getId());
+            }
+            long userId = consultant.getUser().getId();
+            consultantRepo.deleteById(consultant.getId());
+
+            Optional<User> byId1 = userRepo.findById(userId);
+            if (byId1.isPresent()) {
+                User user = byId1.get();
+                userRepo.deleteById(userId);
+            }
+        }
         return true;
     }
 }

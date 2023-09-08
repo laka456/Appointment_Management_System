@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService {
         userRepo.save(user);
         EmailDto emailDto = new EmailDto();
         emailDto.setMsg_body("Your Username: " + userDTO.getUsername() + "\n" + "Your Password: " + userDTO.getPassword());
-        emailDto.setTo_mail("yasirulakshitha7890@gmail.com");
+        emailDto.setTo_mail(userDTO.getUsername());
         emailDto.setSubject("User registration");
         emailService.sendEmail(emailDto);
         return true;
